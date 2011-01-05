@@ -1,12 +1,14 @@
 import os
-from distutils.core import setup, find_packages
+from setuptools import find_packages
+from distutils.core import setup
 
 REQUIRES = [
     'pivotal-py',
+    'httplib2',
     ]
 
 setup(
-    name='pyvotalgit',
+    name='bushy',
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     version='0.0.1',
     author='junkafarian',
@@ -26,9 +28,8 @@ setup(
     long_description=open(os.path.join(os.path.dirname(__file__), "README.rst")).read(),
     entry_points='''
 [console_scripts]
-git-feature = pyvotalgit.feature:main
-git-bug = pyvotalgit.bug:main
-git-chore = pyvotalgit.chore:main
-git-finish = pyvotalgit.finish:main
+git-feature = bushy.scripts:feature
+git-bug = bushy.scripts:bug
+git-finish = bushy.scripts:finish
 ''',
     )
