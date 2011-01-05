@@ -1,0 +1,17 @@
+*.#*
+*.pyc
+*.cache
+.coverage
+src/*/*.egg-info/*
+*.DS_Store
+.Python
+.installed.cfg
+bin/*
+develop-eggs/*
+eggs/*
+include/*
+lib*/*
+parts/*
+docs/_build/*
+*.cov2emacs.log
+*~
