@@ -197,11 +197,11 @@ class Finish(PivotalBase):
     @property
     def current_branch(self):
         branches = self.sys('git branch')
-        branches.split('\n')
+        branches = branches.split('\n')
         for b in branches:
             if b.startswith('* '):
                 return b.strip('* ')
-
+        
         return ''
 
     @property
