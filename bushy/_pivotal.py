@@ -238,16 +238,17 @@ class Finish(PivotalBase):
         story.update_status(self.api.token, 'finished')
         if story.current_state == 'finished':
             integration_branch = self.options['integration_branch']
-            self.put('Merging %s into %s' % (self.current_branch, integration_branch))
+            current_branch = self.current_branch
+            self.put('Merging %s into %s' % (current_branch, integration_branch))
             out = self.sys('git checkout %s' % integration_branch)
             if 'error: ' in out:
                 # TODO: error handling for each command (or before running commands)
                 self.put('There was an error checking out master:\n%s' % out)
                 return
-            self.sys('git merge --no-ff %s' % self.current_branch)
+            self.sys('git merge --no-ff %s' % current_branch)
             
-            self.put('Removing %s branch' % self.current_branch)
-            self.sys('git branch -d %s' % self.current_branch)
+            self.put('Removing %s branch' % current_branch)
+            self.sys('git branch -d %s' % current_branch)
 
         else:
             self.put('Unable to mark Story %s as finished' % story.id)
