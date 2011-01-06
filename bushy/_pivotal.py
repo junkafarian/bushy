@@ -13,7 +13,7 @@ class PivotalBase(Base):
         parser.add_option('-k', '--api-key', dest='api_token', help='Pivotal Tracker API key')
         parser.add_option('-p', '--project-id', dest='project_id', help='Pivotal Tracker project id')
         parser.add_option('-n', '--full-name', dest='full_name', help='Pivotal Tracker full name')
-        parser.add_option('-b', '--integration-branch', dest='integration_branch', help='The branch to merge finished stories back down onto')
+        parser.add_option('-b', '--integration-branch', dest='integration_branch', default='master', help='The branch to merge finished stories back down onto')
         parser.add_option('-m', '--only-mine', dest='only_mine', help='Only select Pivotal Tracker stories assigned to you')
         parser.add_option('-q', '--quiet', action="store_true", dest='quiet', help='Quiet, no-interaction mode')
         parser.add_option('-v', '--verbose', action="store_true", dest='verbose', help='Run verbosely')
@@ -214,8 +214,7 @@ class Finish(PivotalBase):
     @property
     def story(self):
         if not self._story:
-            qs = {'state': 'started',
-                  }
+            qs = {}
             qs['owned_by'] = self.options['full_name']
             
             stories = self.project.stories(filter=format_filter(qs)).get_etree()
@@ -240,9 +239,13 @@ class Finish(PivotalBase):
         if story.current_state == 'finished':
             integration_branch = self.options['integration_branch']
             self.put('Merging %s into %s' % (self.current_branch, integration_branch))
-            self.sys('git checkout %s' % integration_branch)
+            out = self.sys('git checkout %s' % integration_branch)
+            if 'error: ' in out:
+                # TODO: error handling for each command (or before running commands)
+                self.put('There was an error checking out master:\n%s' % out)
+                return
             self.sys('git merge --no-ff %s' % self.current_branch)
-
+            
             self.put('Removing %s branch' % self.current_branch)
             self.sys('git branch -d %s' % self.current_branch)
 
