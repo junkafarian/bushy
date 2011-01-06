@@ -74,8 +74,9 @@ def etree_datetime(etree, element):
         return datetime.strptime(etree.find(element).text, '%Y/%m/%d %H:%M:%S UTC')
     return None
 
-class Story(object):
+class Story(PivotalBase):
     def __init__(self, etree):
+        super(Story, self).__init__()
         self._update(etree)
 
     def _update(self, etree):
@@ -92,12 +93,12 @@ class Story(object):
         self.created_at = etree_datetime(etree, 'created_at')
         self.updated_at = etree_datetime(etree, 'updated_at')
 
-    def update_status(self, token, status):
+    def update_status(self, status):
         h = httplib2.Http()
         h.force_exception_to_status_code = True
         
         url = 'http://www.pivotaltracker.com/services/v3/projects/%s/stories/%s' % (self.project_id, self.id)
-        headers = {'X-TrackerToken': token, 'Content-type': 'application/xml'}
+        headers = {'X-TrackerToken': self.api.token, 'Content-type': 'application/xml'}
         body = '<story><current_state>%s</current_state></story>' % status
         
         resp, content = h.request(url, 'PUT', headers=headers, body=body)
@@ -105,9 +106,22 @@ class Story(object):
         etree = anyetree.etree.fromstring(content)
         self._update(etree)
         
-    def start(self, token):
-        self.update_status(token, 'started')
+    def comment(self, comment):
+        h = httplib2.Http()
+        h.force_exception_to_status_code = True
         
+        url = 'http://www.pivotaltracker.com/services/v3/projects/%s/stories/%s/notes' % (self.project_id, self.id)
+        headers = {'X-TrackerToken': self.api.token, 'Content-type': 'application/xml'}
+        body = '<note><text>%s</text></note>' % comment
+        
+        resp, content = h.request(url, 'POST', headers=headers, body=body)
+        return content
+        
+    def start(self):
+        self.update_status('started')
+        self.comment('Story started by %s' % self.options['full_name'])
+    
+
 class Pick(PivotalBase):
     
     @property
@@ -158,7 +172,7 @@ class Pick(PivotalBase):
 
         self.put('Updating %s status in Pivotal Tracker...' % self.type)
 
-        story.start(self.api.token)
+        story.start()
         if story.owned_by == self.options['full_name']:
             suffix = default = self.branch_suffix
             if not self.options['quiet']:
@@ -235,7 +249,7 @@ class Finish(PivotalBase):
 
         story = self.story
         self.put('Marking Story %s as finished...' % story.id)
-        story.update_status(self.api.token, 'finished')
+        story.update_status('finished')
         if story.current_state == 'finished':
             integration_branch = self.options['integration_branch']
             current_branch = self.current_branch
@@ -249,6 +263,10 @@ class Finish(PivotalBase):
             
             self.put('Removing %s branch' % current_branch)
             self.sys('git branch -d %s' % current_branch)
+
+            story.comment('Development work for this story has been merged into the trunk')
+            
+            self.put('Merged code into trunk. Please push upstream and notify the release manager if necessary')
 
         else:
             self.put('Unable to mark Story %s as finished' % story.id)
