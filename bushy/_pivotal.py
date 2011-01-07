@@ -71,7 +71,11 @@ def etree_int(etree, element):
 
 def etree_datetime(etree, element):
     if etree.find(element) is not None:
-        return datetime.strptime(etree.find(element).text, '%Y/%m/%d %H:%M:%S UTC')
+        d = etree.find(element).text
+        dt,tz = d.rsplit(' ', 1)
+        res = datetime.strptime(dt, '%Y/%m/%d %H:%M:%S')
+        # TODO: handle timezone in format UTC, IST, etc.
+        return res 
     return None
 
 class Story(object):
