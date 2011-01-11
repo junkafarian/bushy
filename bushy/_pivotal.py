@@ -106,6 +106,19 @@ class Story(PivotalBase):
         etree = anyetree.etree.fromstring(content)
         self._update(etree)
         
+    def update_owner(self, owner):
+        h = httplib2.Http()
+        h.force_exception_to_status_code = True
+        
+        url = 'http://www.pivotaltracker.com/services/v3/projects/%s/stories/%s' % (self.project_id, self.id)
+        headers = {'X-TrackerToken': self.api.token, 'Content-type': 'application/xml'}
+        body = '<story><owned_by>%s</owned_by></story>' % owner
+        
+        resp, content = h.request(url, 'PUT', headers=headers, body=body)
+        
+        etree = anyetree.etree.fromstring(content)
+        self._update(etree)
+        
     def comment(self, comment):
         h = httplib2.Http()
         h.force_exception_to_status_code = True
@@ -119,6 +132,7 @@ class Story(PivotalBase):
         
     def start(self):
         self.update_status('started')
+        self.update_owner(self.options['full_name'])
         self.comment('Story started by %s' % self.options['full_name'])
     
 
