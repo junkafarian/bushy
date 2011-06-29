@@ -35,14 +35,16 @@ class Base(object):
         return self._integration_branch or 'master'
             
     def __call__(self):
-        if None in (self.options['api_token'], self.options['project_id']):
+        if None in (self.options.get('api_token'), self.options.get('project_id')):
             raise RuntimeError('Pivotal Tracker API Token and Project ID are required')
 
     # convenience
 
     def put(self, msg, newline=True):
         if not self.options.get('quiet', False):
-            self.output.write(str(msg))
+            if not isinstance(msg, basestring):
+                msg = str(msg)
+            self.output.write(msg.encode('ascii', 'replace'))
             if newline:
                 self.output.write('\n')
 
