@@ -3,7 +3,8 @@ Bushy
 
 A git workflow plugin inspired by 
 `git-pivotal <https://github.com/trydionel/git-pivotal>`_ but
-intending to support multiple project management platforms aside from just Pivotal Tracker
+intending to support multiple project management platforms aside from
+just Pivotal Tracker.
 
 
 Installation
