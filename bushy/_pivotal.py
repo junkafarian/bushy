@@ -1,6 +1,7 @@
 """ Utilities for interfacing with a Pivotal Tracker project
 """
 
+import sys
 import optparse
 from commands import getoutput
 from pivotal import Pivotal, anyetree
@@ -168,10 +169,18 @@ class Pick(PivotalBase):
     
     def __call__(self):
         super(Pick, self).__call__()
-        
-        msg = 'Retrieving latest %s from Pivotal Tracker' % self.plural_type
-        if self.options['only_mine']:
-            msg += " for" + self.options['full_name']
+
+        if len(sys.argv) == 3 and sys.argv[-1] != self.type:
+            # the command was run in the format `git TYPE STORY_NUMBER`
+            pass
+        elif len(sys.argv) == 2 and sys.argv[-1] != self.type:
+            # the command was run in the format `git-TYPE STORY_NUMBER`
+            pass
+        else:
+            # there was no story number provided so just pick the first one
+            msg = 'Retrieving latest %s from Pivotal Tracker' % self.plural_type
+            if self.options['only_mine']:
+                msg += " for" + self.options['full_name']
 
         self.put(msg)
         
