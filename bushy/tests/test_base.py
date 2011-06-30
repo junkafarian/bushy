@@ -7,6 +7,14 @@ class TestBase(unittest.TestCase):
     def setUp(self):
         self._input = StringIO()
         self._output = StringIO()
+        
+        import bushy.base
+        self._getoutput = bushy.base.getoutput
+        bushy.base.getoutput = lambda x: x
+
+    def tearDown(self):
+        import bushy.base
+        bushy.base.getoutput = self._getoutput
     
     def _makeOne(self, args):
         return DummyBase(self._input, self._output, args)
@@ -82,6 +90,24 @@ class TestBase(unittest.TestCase):
         self._output.seek(0)
         out = self._output.read()
         self.assertEqual(out, 'hello world\n')
+
+    def test_sys(self):
+        base = self._makeOne([])
+
+        self.assertEqual(base.sys('foo'), 'foo')
+        self._output.seek(0)
+        out = self._output.read()
+        self.assertEqual(out, '')
+    
+    def test_sys_verbose(self):
+        base = self._makeOne([])
+
+        base.options['verbose'] = True
+
+        self.assertEqual(base.sys('foo'), 'foo')
+        self._output.seek(0)
+        out = self._output.read()
+        self.assertEqual(out, 'Running command: foo\n')
         
 
 class DummyBase(Base):
