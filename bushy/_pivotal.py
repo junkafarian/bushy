@@ -3,6 +3,8 @@
 
 import sys
 import optparse
+import httplib2
+from datetime import datetime
 from commands import getoutput
 from pivotal import Pivotal, anyetree
 from bushy.base import Base
@@ -56,9 +58,6 @@ class PivotalBase(Base):
 def format_filter(qs):
     filters = ['%s:%s' % (k,v) for k,v in qs.items()]
     return ' '.join(filters)
-
-from datetime import datetime
-import httplib2
 
 def etree_text(etree, element):
     if etree.find(element) is not None:
@@ -216,7 +215,9 @@ class Pick(PivotalBase):
         else:
             self.put('Unable to update ', False)
             self.put(story.id)
-            
+
+
+## Command line API ##
 
 class Feature(Pick):
     type = 'feature'
