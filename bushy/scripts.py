@@ -1,6 +1,7 @@
 from commands import getoutput
 
-SUPPORTED_PLATFORMS = ['pivotal']
+SUPPORTED_PLATFORMS = ['pivotal',
+                       ]
 
 def feature():
     platform = getoutput('git config --get bushy.platform')
