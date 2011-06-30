@@ -10,7 +10,7 @@ REQUIRES = [
 setup(
     name='bushy',
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-    version='0.0.1',
+    version='0.0.1dev',
     author='junkafarian',
     install_requires=REQUIRES,
     classifiers=[
