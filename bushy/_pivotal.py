@@ -9,6 +9,11 @@ from commands import getoutput
 from pivotal import Pivotal, anyetree
 from bushy.base import Base
 
+__all__ = ['Bug',
+           'Feature',
+           'Finish',
+           ]
+
 class PivotalBase(Base):
     
     def init_parser(self):
