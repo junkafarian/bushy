@@ -170,13 +170,13 @@ class Pick(PivotalBase):
         return self._story
         
     
-    def __call__(self, raw_input=raw_input):
+    def __call__(self, args=sys.argv, raw_input=raw_input):
         super(Pick, self).__call__()
 
-        if len(sys.argv) == 3 and sys.argv[-1] != self.type:
+        if len(args) == 3 and args[-1] != self.type:
             # the command was run in the format `git TYPE STORY_NUMBER`
             pass
-        elif len(sys.argv) == 2 and sys.argv[-1] != self.type:
+        elif len(args) == 2 and args[-1] != self.type:
             # the command was run in the format `git-TYPE STORY_NUMBER`
             pass
         else:

@@ -289,7 +289,7 @@ class TestFeature(unittest.TestCase):
         pick.options['only_mine'] = True
         pick.options['full_name'] = 'Mr Test'
 
-        pick()
+        pick(args=[])
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -314,7 +314,7 @@ class TestFeature(unittest.TestCase):
 
         pick._story = story
         
-        pick(raw_input=lambda s: '')
+        pick(args=[], raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -343,7 +343,7 @@ class TestFeature(unittest.TestCase):
 
         pick._story = story
         
-        pick(raw_input=lambda s: '')
+        pick(args=[], raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
