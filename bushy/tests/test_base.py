@@ -8,13 +8,15 @@ class TestBase(unittest.TestCase):
         self._input = StringIO()
         self._output = StringIO()
         
+    def _patch_getoutput(self, value):
         import bushy.base
         self._getoutput = bushy.base.getoutput
         bushy.base.getoutput = lambda x: x
 
     def tearDown(self):
-        import bushy.base
-        bushy.base.getoutput = self._getoutput
+        if hasattr(self, '_getoutput'):
+            import bushy.base
+            bushy.base.getoutput = self._getoutput
     
     def _makeOne(self, args):
         return DummyBase(self._input, self._output, args)
@@ -92,6 +94,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(out, 'hello world\n')
 
     def test_sys(self):
+        self._patch_getoutput('')
         base = self._makeOne([])
 
         self.assertEqual(base.sys('foo'), 'foo')
@@ -100,6 +103,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(out, '')
     
     def test_sys_verbose(self):
+        self._patch_getoutput('')
         base = self._makeOne([])
 
         base.options['verbose'] = True
