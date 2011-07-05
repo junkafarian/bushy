@@ -20,10 +20,10 @@ class Base(object):
         options.update(gitconfig)
         self.options = options
 
-    def init_parser(self):
+    def init_parser(self): # pragma: no cover
         raise NotImplementedError('This method should be written specifically for the platform being used')
         
-    def parse_gitconfig(self):
+    def parse_gitconfig(self): # pragma: no cover
         raise NotImplementedError('This method should be written specifically for the platform being used')
     
     _integration_branch = None
