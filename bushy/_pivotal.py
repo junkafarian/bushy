@@ -183,7 +183,7 @@ class Pick(PivotalBase):
             # there was no story number provided so just pick the first one
             msg = 'Retrieving latest %s from Pivotal Tracker' % self.plural_type
             if self.options['only_mine']:
-                msg += " for" + self.options['full_name']
+                msg += " for " + self.options['full_name']
 
         self.put(msg)
         
