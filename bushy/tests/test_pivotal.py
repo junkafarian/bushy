@@ -193,3 +193,90 @@ class TestStory(unittest.TestCase):
         
 
     
+class TestPick(unittest.TestCase):
+    def setUp(self):
+        self._input = StringIO()
+        self._output = StringIO()
+        
+    def _makeOne(self, args):
+        from bushy._pivotal import Pick
+
+        return Pick(input=self._input, output=self._output, args=args)
+
+    def test_type(self):
+        pick = self._makeOne([])
+
+        self.assertRaises(NotImplementedError, lambda: pick.type)
+
+    def test_plural_type(self):
+        pick = self._makeOne([])
+
+        self.assertRaises(NotImplementedError, lambda: pick.plural_type)
+
+    def test_branch_suffix(self):
+        pick = self._makeOne([])
+
+        self.assertRaises(NotImplementedError, lambda: pick.branch_suffix)
+
+
+class TestFeature(unittest.TestCase):
+    def setUp(self):
+        self._input = StringIO()
+        self._output = StringIO()
+        
+    def _makeOne(self, args):
+        from bushy._pivotal import Feature
+
+        return Feature(input=self._input, output=self._output, args=args)
+
+    def _patch_getoutput(self, value):
+        import bushy._pivotal
+        self._getoutput = bushy._pivotal.getoutput
+        bushy._pivotal.getoutput = lambda x: value
+
+    def test_type(self):
+        pick = self._makeOne([])
+
+        self.assertEqual(pick.type, 'feature')
+
+    def test_plural_type(self):
+        pick = self._makeOne([])
+
+        self.assertEqual(pick.plural_type, 'features')
+
+    def test_branch_suffix(self):
+        pick = self._makeOne([])
+
+        self.assertEqual(pick.branch_suffix, 'feature')
+
+    def test_story(self):
+        self._patch_getoutput('true')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+
+        # make sure we've got sufficient access to the pick.project attribute
+        self.assertTrue(pick.project.url.endswith('/uniqueproject'))
+        self.assertEqual(pick.project.token, 'token')
+
+        # test badly configured api / project values don't break the machinery
+        self.assertEqual(pick._story, None)
+        self.assertEqual(pick.story, None) # call the property
+        self.assertEqual(pick._story, None)
+
+        
+class DummyHttp(object):
+    def __init__(self):
+        self.requests = []
+        self.headers = {'status': '200',
+                        }
+        self.content = ''
+        self.responses = []
+
+    def request(self, url, method, headers={}, body=''):
+        self.requests.append((url, method, headers, body))
+        if len(self.responses):
+            print self.responses
+            return self.headers, self.responses.pop(0)
+        return self.headers, self.content
