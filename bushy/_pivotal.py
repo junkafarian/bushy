@@ -264,7 +264,7 @@ class Finish(PivotalBase):
             
             stories = self.project.stories(filter=format_filter(qs)).get_etree()
             for story in stories.getchildren():
-                if story.find('id').text == self.story_id:
+                if story.find('id') and story.find('id').text == self.story_id:
                     self._story = Story(story)
             
         return self._story
