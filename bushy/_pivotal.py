@@ -249,6 +249,9 @@ class Finish(PivotalBase):
     @property
     def story_id(self):
         current_branch = self.current_branch
+        if '-' not in current_branch:
+            return ''
+        
         story_id,_ = current_branch.split('-', 1)
         return story_id
     
