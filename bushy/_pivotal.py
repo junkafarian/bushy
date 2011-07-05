@@ -272,9 +272,9 @@ class Finish(PivotalBase):
     def __call__(self):
         super(Finish, self).__call__()
       
-        if not self.story_id:
-            self.put('The current branch name (%s) does not follow the '+\
-                     'correct format, please checkout the correct '+\
+        if self.story_id == '':
+            self.put('The current branch name (%s) does not follow the '
+                     'correct format, please checkout the correct '
                      'branch then re-run this command' % self.current_branch)
             return
 
