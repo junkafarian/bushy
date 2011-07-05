@@ -90,6 +90,24 @@ class TestPivotalBase(unittest.TestCase):
 
         self.assertEqual(base.options['integration_branch'], 'true',
                          'The integration branch should overridden by gitconfig')
+
+    def test_api(self):
+        self._patch_getoutput('true')
+        
+        base = self._makeOne([])
+        base.options['api_token'] = 'token'
+
+        self.assertEqual(base.api.token, 'token')
+        
+    def test_project(self):
+        self._patch_getoutput('true')
+        
+        base = self._makeOne([])
+        base.options['api_token'] = 'token'
+        base.options['project_id'] = 'uniqueproject'
+
+        self.assertTrue(base.project.url.endswith('/uniqueproject'))
+        self.assertEqual(base.project.token, 'token')
         
 class TestStory(unittest.TestCase):
     def setUp(self):
