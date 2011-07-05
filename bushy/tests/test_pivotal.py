@@ -137,4 +137,59 @@ class TestStory(unittest.TestCase):
         self.assertEqual(story.created_at, None)
         self.assertEqual(story.updated_at, None)
 
+    def test_update_status(self):
+        story = self._makeOne('<xml></xml>', [])
+
+        status = 'started'
+        
+        story.h = DummyHttp()
+        story.h.content = '<story><current_state>%s</current_state></story>' % status
+
+        self.assertEqual(story.current_state, '')
+        
+        story.update_status(status)
+
+        self.assertEqual(story.current_state, status)
+        
+    def test_update_owner(self):
+        story = self._makeOne('<xml></xml>', [])
+
+        owner = 'user'
+        
+        story.h = DummyHttp()
+        story.h.content = '<story><owned_by>%s</owned_by></story>' % owner
+
+        self.assertEqual(story.owned_by, '')
+        
+        story.update_owner(owner)
+
+        self.assertEqual(story.owned_by, owner)
+        
+    def test_comment(self):
+        story = self._makeOne('<xml></xml>', [])
+
+        comment = 'started'
+        
+        story.h = DummyHttp()
+
+        story.comment(comment)
+
+        self.assertEqual(story.h.requests[0][3], '<note><text>%s</text></note>' % comment)
+
+    def test_start(self):
+        story = self._makeOne('<xml></xml>', [])
+
+        story.options['full_name'] = 'Mr Test'
+        
+        story.h = DummyHttp()
+        story.h.responses.append('<story><current_state>%s</current_state></story>' % 'started')
+        story.h.responses.append('<story><current_state>%s</current_state><owned_by>%s</owned_by></story>' % ('started', story.options['full_name']))
+
+        story.start()
+        
+        self.assertEqual(story.current_state, 'started')
+        self.assertEqual(story.owned_by, story.options['full_name'])
+        self.assertEqual(story.h.requests[2][3], '<note><text>Story started by %s</text></note>' % story.options['full_name'])
+        
+
     
