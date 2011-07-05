@@ -83,6 +83,8 @@ class Story(PivotalBase):
     def __init__(self, etree, input=sys.stdin, output=sys.stdout, args=sys.argv):
         super(Story, self).__init__(input, output, args)
         self._update(etree)
+        self.h = httplib2.Http()
+        self.h.force_exception_to_status_code = True
 
     def _update(self, etree):
         self.id = etree_int(etree, 'id')
@@ -99,8 +101,7 @@ class Story(PivotalBase):
         self.updated_at = etree_datetime(etree, 'updated_at')
 
     def update_status(self, status):
-        h = httplib2.Http()
-        h.force_exception_to_status_code = True
+        h = self.h
         
         url = 'http://www.pivotaltracker.com/services/v3/projects/%s/stories/%s' % (self.project_id, self.id)
         headers = {'X-TrackerToken': self.api.token, 'Content-type': 'application/xml'}
@@ -112,8 +113,7 @@ class Story(PivotalBase):
         self._update(etree)
         
     def update_owner(self, owner):
-        h = httplib2.Http()
-        h.force_exception_to_status_code = True
+        h = self.h
         
         url = 'http://www.pivotaltracker.com/services/v3/projects/%s/stories/%s' % (self.project_id, self.id)
         headers = {'X-TrackerToken': self.api.token, 'Content-type': 'application/xml'}
@@ -125,8 +125,7 @@ class Story(PivotalBase):
         self._update(etree)
         
     def comment(self, comment):
-        h = httplib2.Http()
-        h.force_exception_to_status_code = True
+        h = self.h
         
         url = 'http://www.pivotaltracker.com/services/v3/projects/%s/stories/%s/notes' % (self.project_id, self.id)
         headers = {'X-TrackerToken': self.api.token, 'Content-type': 'application/xml'}
