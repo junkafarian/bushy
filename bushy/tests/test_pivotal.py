@@ -280,22 +280,6 @@ class TestFeature(unittest.TestCase):
         self.assertEqual(pick.story, None) # call the property
         self.assertEqual(pick._story, None)
 
-    def test_call_only_mine_no_story(self):
-        self._patch_getoutput('')
-        
-        pick = self._makeOne([])
-        pick.options['api_token'] = 'token'
-        pick.options['project_id'] = 'uniqueproject'
-        pick.options['only_mine'] = True
-        pick.options['full_name'] = 'Mr Test'
-
-        pick(args=[])
-
-        self._output.seek(0)
-        out = self._output.readlines()
-        self.assertEqual(out[0], 'Retrieving latest features from Pivotal Tracker for Mr Test\n')
-        self.assertEqual(out[1], 'No features available!\n')
-
     def test_call(self):
         self._patch_getoutput('')
         
@@ -314,7 +298,7 @@ class TestFeature(unittest.TestCase):
 
         pick._story = story
         
-        pick(args=[], raw_input=lambda s: '')
+        pick(args=['git', 'feature'], raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -343,7 +327,7 @@ class TestFeature(unittest.TestCase):
 
         pick._story = story
         
-        pick(args=[], raw_input=lambda s: '')
+        pick(args=['git', 'feature'], raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -353,8 +337,291 @@ class TestFeature(unittest.TestCase):
         self.assertEqual(out[3], 'Updating feature status in Pivotal Tracker...\n')
         self.assertEqual(out[4], 'Switching to branch 12345-feature\n')
 
+    def test_call_only_mine_no_story(self):
+        self._patch_getoutput('')
         
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['only_mine'] = True
+        pick.options['full_name'] = 'Mr Test'
+
+        pick(args=['git', 'feature'])
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving latest features from Pivotal Tracker for Mr Test\n')
+        self.assertEqual(out[1], 'No features available!\n')
+
+    def test_call_unable_to_update(self):
+        self._patch_getoutput('12345-feature')
         
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['only_mine'] = False
+        pick.options['full_name'] = 'Mr Test'
+        
+        story = self._makeStory('<xml></xml>', [])
+        story.id = 12345
+        story.name = 'Story 1'
+        story.url = 'http://url'
+        story.owned_by = pick.options['full_name']
+        story.h = DummyHttp()
+        story.h.content = '<story><id>%s</id><name>%s</name><url>%s</url><current_state>%s</current_state><owned_by>%s</owned_by></story>' % (story.id, story.name, story.url, 'started', 'someone else')
+
+        pick._story = story
+        
+        pick(args=['git', 'feature'], raw_input=lambda s: '')
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving latest features from Pivotal Tracker\n')
+        self.assertEqual(out[1], 'Story: %s\n' % story.name)
+        self.assertEqual(out[2], 'URL: %s\n' % story.url)
+        self.assertEqual(out[3], 'Updating feature status in Pivotal Tracker...\n')
+        self.assertEqual(out[4], 'Unable to update 12345\n')
+
+class TestBug(unittest.TestCase):
+    def setUp(self):
+        self._input = StringIO()
+        self._output = StringIO()
+        
+    def tearDown(self):
+        if hasattr(self, '_getoutput'):
+            import bushy.base
+            import bushy._pivotal
+            bushy.base.getoutput = self._getoutput
+            bushy._pivotal.getoutput = self._getoutput
+    
+    def _patch_getoutput(self, value):
+        import bushy.base
+        import bushy._pivotal
+        self._getoutput = bushy.base.getoutput
+        bushy.base.getoutput = lambda x: value
+        bushy._pivotal.getoutput = lambda x: value
+
+    def _makeOne(self, args):
+        from bushy._pivotal import Bug
+
+        return Bug(input=self._input, output=self._output, args=args)
+
+    def _makeStory(self, xml, args):
+        from bushy._pivotal import Story
+        from pivotal import anyetree
+
+        etree = anyetree.etree.fromstring(xml)
+        return Story(etree, input=self._input, output=self._output, args=args)
+
+    def test_type(self):
+        pick = self._makeOne([])
+
+        self.assertEqual(pick.type, 'bug')
+
+    def test_plural_type(self):
+        pick = self._makeOne([])
+
+        self.assertEqual(pick.plural_type, 'bugs')
+
+    def test_branch_suffix(self):
+        pick = self._makeOne([])
+
+        self.assertEqual(pick.branch_suffix, 'bug')
+
+    def test_story(self):
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+
+        # make sure we've got sufficient access to the pick.project attribute
+        self.assertTrue(pick.project.url.endswith('/uniqueproject'))
+        self.assertEqual(pick.project.token, 'token')
+
+        # test badly configured api / project values don't break the machinery
+        self.assertEqual(pick._story, None)
+        self.assertEqual(pick.story, None) # call the property
+        self.assertEqual(pick._story, None)
+
+    def test_call(self):
+        self._patch_getoutput('')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['full_name'] = 'Mr Test'
+        
+        story = self._makeStory('<xml></xml>', [])
+        story.id = 12345
+        story.name = 'Story 1'
+        story.url = 'http://url'
+        story.owned_by = pick.options['full_name']
+        story.h = DummyHttp()
+        story.h.content = '<story><id>%s</id><name>%s</name><url>%s</url><current_state>%s</current_state><owned_by>%s</owned_by></story>' % (story.id, story.name, story.url, 'started', pick.options['full_name'])
+
+        pick._story = story
+        
+        pick(args=['git', 'bug'], raw_input=lambda s: '')
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving latest bugs from Pivotal Tracker\n')
+        self.assertEqual(out[1], 'Story: %s\n' % story.name)
+        self.assertEqual(out[2], 'URL: %s\n' % story.url)
+        self.assertEqual(out[3], 'Updating bug status in Pivotal Tracker...\n')
+        self.assertEqual(out[4], 'Creating new branch: 12345-bug\n')
+
+    def test_call_existing_branch(self):
+        self._patch_getoutput('12345-bug')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['only_mine'] = False
+        pick.options['full_name'] = 'Mr Test'
+        
+        story = self._makeStory('<xml></xml>', [])
+        story.id = 12345
+        story.name = 'Story 1'
+        story.url = 'http://url'
+        story.owned_by = pick.options['full_name']
+        story.h = DummyHttp()
+        story.h.content = '<story><id>%s</id><name>%s</name><url>%s</url><current_state>%s</current_state><owned_by>%s</owned_by></story>' % (story.id, story.name, story.url, 'started', pick.options['full_name'])
+
+        pick._story = story
+        
+        pick(args=['git', 'bug'], raw_input=lambda s: '')
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving latest bugs from Pivotal Tracker\n')
+        self.assertEqual(out[1], 'Story: %s\n' % story.name)
+        self.assertEqual(out[2], 'URL: %s\n' % story.url)
+        self.assertEqual(out[3], 'Updating bug status in Pivotal Tracker...\n')
+        self.assertEqual(out[4], 'Switching to branch 12345-bug\n')
+
+    def test_call_only_mine_no_story(self):
+        self._patch_getoutput('')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['only_mine'] = True
+        pick.options['full_name'] = 'Mr Test'
+
+        pick(args=['git', 'bug'])
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving latest bugs from Pivotal Tracker for Mr Test\n')
+        self.assertEqual(out[1], 'No bugs available!\n')
+
+    def test_call_unable_to_update(self):
+        self._patch_getoutput('12345-bug')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['only_mine'] = False
+        pick.options['full_name'] = 'Mr Test'
+        
+        story = self._makeStory('<xml></xml>', [])
+        story.id = 12345
+        story.name = 'Story 1'
+        story.url = 'http://url'
+        story.owned_by = pick.options['full_name']
+        story.h = DummyHttp()
+        story.h.content = '<story><id>%s</id><name>%s</name><url>%s</url><current_state>%s</current_state><owned_by>%s</owned_by></story>' % (story.id, story.name, story.url, 'started', 'someone else')
+
+        pick._story = story
+        
+        pick(args=['git', 'bug'], raw_input=lambda s: '')
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving latest bugs from Pivotal Tracker\n')
+        self.assertEqual(out[1], 'Story: %s\n' % story.name)
+        self.assertEqual(out[2], 'URL: %s\n' % story.url)
+        self.assertEqual(out[3], 'Updating bug status in Pivotal Tracker...\n')
+        self.assertEqual(out[4], 'Unable to update 12345\n')
+
+class TestFinish(unittest.TestCase):
+    def setUp(self):
+        self._input = StringIO()
+        self._output = StringIO()
+        
+    def tearDown(self):
+        if hasattr(self, '_getoutput'):
+            import bushy.base
+            import bushy._pivotal
+            bushy.base.getoutput = self._getoutput
+            bushy._pivotal.getoutput = self._getoutput
+    
+    def _patch_getoutput(self, value):
+        import bushy.base
+        import bushy._pivotal
+        self._getoutput = bushy.base.getoutput
+        bushy.base.getoutput = lambda x: value
+        bushy._pivotal.getoutput = lambda x: value
+
+    def _makeOne(self, args):
+        from bushy._pivotal import Finish
+
+        return Finish(input=self._input, output=self._output, args=args)
+
+    def _makeStory(self, xml, args):
+        from bushy._pivotal import Story
+        from pivotal import anyetree
+
+        etree = anyetree.etree.fromstring(xml)
+        return Story(etree, input=self._input, output=self._output, args=args)
+
+    def test_no_current_branch(self):
+        self._patch_getoutput('')
+        
+        pick = self._makeOne([])
+
+        self.assertEqual(pick.current_branch, '')
+
+    def test_current_branch(self):
+        self._patch_getoutput('foo\n* bar\nbaz')
+        
+        pick = self._makeOne([])
+
+        self.assertEqual(pick.current_branch, 'bar')
+
+    def test_story_id(self):
+        self._patch_getoutput('* 12345-feature')
+        
+        pick = self._makeOne([])
+
+        self.assertEqual(pick.current_branch, '12345-feature')
+        self.assertEqual(pick.story_id, '12345')
+
+    def test_no_story(self):
+        self._patch_getoutput('* 12345-feature')
+        
+        pick = self._makeOne([])
+
+        self.assertEqual(pick._story, None)
+        self.assertEqual(pick.story, None)
+        self.assertEqual(pick._story, None)
+
+    def test_call_no_story_id(self):
+        self._patch_getoutput('* master')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+
+        pick()
+        
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'The current branch name (master) does not follow the '+\
+                         'correct format, please checkout the correct '+\
+                         'branch then re-run this command\n')
+        
+
 class DummyHttp(object):
     def __init__(self):
         self.requests = []
