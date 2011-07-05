@@ -170,7 +170,7 @@ class Pick(PivotalBase):
         return self._story
         
     
-    def __call__(self):
+    def __call__(self, raw_input=raw_input):
         super(Pick, self).__call__()
 
         if len(sys.argv) == 3 and sys.argv[-1] != self.type:

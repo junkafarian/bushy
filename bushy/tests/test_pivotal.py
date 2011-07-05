@@ -63,8 +63,9 @@ class TestPivotalBase(unittest.TestCase):
         self._output = StringIO()
 
     def tearDown(self):
-        import bushy._pivotal
-        bushy._pivotal.getoutput = self._getoutput
+        if hasattr(self, '_getoutput'):
+            import bushy._pivotal
+            bushy._pivotal.getoutput = self._getoutput
     
     def _patch_getoutput(self, value):
         import bushy._pivotal
@@ -224,15 +225,31 @@ class TestFeature(unittest.TestCase):
         self._input = StringIO()
         self._output = StringIO()
         
+    def tearDown(self):
+        if hasattr(self, '_getoutput'):
+            import bushy.base
+            import bushy._pivotal
+            bushy.base.getoutput = self._getoutput
+            bushy._pivotal.getoutput = self._getoutput
+    
+    def _patch_getoutput(self, value):
+        import bushy.base
+        import bushy._pivotal
+        self._getoutput = bushy.base.getoutput
+        bushy.base.getoutput = lambda x: value
+        bushy._pivotal.getoutput = lambda x: value
+
     def _makeOne(self, args):
         from bushy._pivotal import Feature
 
         return Feature(input=self._input, output=self._output, args=args)
 
-    def _patch_getoutput(self, value):
-        import bushy._pivotal
-        self._getoutput = bushy._pivotal.getoutput
-        bushy._pivotal.getoutput = lambda x: value
+    def _makeStory(self, xml, args):
+        from bushy._pivotal import Story
+        from pivotal import anyetree
+
+        etree = anyetree.etree.fromstring(xml)
+        return Story(etree, input=self._input, output=self._output, args=args)
 
     def test_type(self):
         pick = self._makeOne([])
@@ -250,8 +267,6 @@ class TestFeature(unittest.TestCase):
         self.assertEqual(pick.branch_suffix, 'feature')
 
     def test_story(self):
-        self._patch_getoutput('true')
-        
         pick = self._makeOne([])
         pick.options['api_token'] = 'token'
         pick.options['project_id'] = 'uniqueproject'
@@ -265,6 +280,80 @@ class TestFeature(unittest.TestCase):
         self.assertEqual(pick.story, None) # call the property
         self.assertEqual(pick._story, None)
 
+    def test_call_only_mine_no_story(self):
+        self._patch_getoutput('')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['only_mine'] = True
+        pick.options['full_name'] = 'Mr Test'
+
+        pick()
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving latest features from Pivotal Tracker for Mr Test\n')
+        self.assertEqual(out[1], 'No features available!\n')
+
+    def test_call(self):
+        self._patch_getoutput('')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['full_name'] = 'Mr Test'
+        
+        story = self._makeStory('<xml></xml>', [])
+        story.id = 12345
+        story.name = 'Story 1'
+        story.url = 'http://url'
+        story.owned_by = pick.options['full_name']
+        story.h = DummyHttp()
+        story.h.content = '<story><id>%s</id><name>%s</name><url>%s</url><current_state>%s</current_state><owned_by>%s</owned_by></story>' % (story.id, story.name, story.url, 'started', pick.options['full_name'])
+
+        pick._story = story
+        
+        pick(raw_input=lambda s: '')
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving latest features from Pivotal Tracker\n')
+        self.assertEqual(out[1], 'Story: %s\n' % story.name)
+        self.assertEqual(out[2], 'URL: %s\n' % story.url)
+        self.assertEqual(out[3], 'Updating feature status in Pivotal Tracker...\n')
+        self.assertEqual(out[4], 'Creating new branch: 12345-feature\n')
+
+    def test_call_existing_branch(self):
+        self._patch_getoutput('12345-feature')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['only_mine'] = False
+        pick.options['full_name'] = 'Mr Test'
+        
+        story = self._makeStory('<xml></xml>', [])
+        story.id = 12345
+        story.name = 'Story 1'
+        story.url = 'http://url'
+        story.owned_by = pick.options['full_name']
+        story.h = DummyHttp()
+        story.h.content = '<story><id>%s</id><name>%s</name><url>%s</url><current_state>%s</current_state><owned_by>%s</owned_by></story>' % (story.id, story.name, story.url, 'started', pick.options['full_name'])
+
+        pick._story = story
+        
+        pick(raw_input=lambda s: '')
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving latest features from Pivotal Tracker\n')
+        self.assertEqual(out[1], 'Story: %s\n' % story.name)
+        self.assertEqual(out[2], 'URL: %s\n' % story.url)
+        self.assertEqual(out[3], 'Updating feature status in Pivotal Tracker...\n')
+        self.assertEqual(out[4], 'Switching to branch 12345-feature\n')
+
+        
         
 class DummyHttp(object):
     def __init__(self):
