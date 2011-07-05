@@ -80,8 +80,8 @@ def etree_datetime(etree, element):
     return None
 
 class Story(PivotalBase):
-    def __init__(self, etree):
-        super(Story, self).__init__()
+    def __init__(self, etree, input=sys.stdin, output=sys.stdout, args=sys.argv):
+        super(Story, self).__init__(input, output, args)
         self._update(etree)
 
     def _update(self, etree):
