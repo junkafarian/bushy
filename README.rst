@@ -87,9 +87,9 @@ You can then push these changes upstream.
 Roadmap
 =======
 
-* Unit Tests
+* Unit Tests - completed
+* Allow features / bugs to be selected by ID on the commandline - completed
 * Support for github issues
-* Allow features / bugs to be selected by ID on the commandline
 
 
 Etymology
