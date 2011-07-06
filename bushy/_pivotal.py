@@ -23,6 +23,7 @@ class PivotalBase(Base):
         parser.add_option('-n', '--full-name', dest='full_name', help='Pivotal Tracker full name')
         parser.add_option('-b', '--integration-branch', dest='integration_branch', default='master', help='The branch to merge finished stories back down onto')
         parser.add_option('-m', '--only-mine', dest='only_mine', help='Only select Pivotal Tracker stories assigned to you')
+        parser.add_option('-s', '--story', dest='target_story', help='Specify a story to work on (if applicable)')
         parser.add_option('-q', '--quiet', action="store_true", dest='quiet', help='Quiet, no-interaction mode')
         parser.add_option('-v', '--verbose', action="store_true", dest='verbose', help='Run verbosely')
         return parser
@@ -155,13 +156,15 @@ class Pick(PivotalBase):
         raise NotImplementedError('Must define in subclass')
 
     _story = None
-    @property
-    def story(self):
+    
+    def get_story(self, story_id=None):
         if not self._story:
             qs = {'state': 'unstarted',
                   'type': self.type,
                   }
-            if self.options.get('only_mine'):
+            if story_id is not None:
+                qs['id'] = story_id
+            elif self.options.get('only_mine'):
                 qs['owned_by'] = self.options['full_name']
             stories = self.project.stories(filter=format_filter(qs)).get_etree()
             story = stories.find('story')
@@ -170,15 +173,19 @@ class Pick(PivotalBase):
         return self._story
         
     
-    def __call__(self, args=sys.argv, raw_input=raw_input):
+    def __call__(self, raw_input=raw_input):
         super(Pick, self).__call__()
 
-        if len(args) == 3 and args[-1] != self.type:
-            # the command was run in the format `git TYPE STORY_NUMBER`
-            pass
-        elif len(args) == 2 and args[-1] != self.type:
-            # the command was run in the format `git-TYPE STORY_NUMBER`
-            pass
+        if self.options['target_story']:
+            # the -s / --story flag was specified
+            target_story = self.options['target_story']
+            self.put('Retrieving story %s from Pivotal Tracker' % target_story)
+        
+            story = self.get_story(story_id=target_story)
+            
+            if story is None:
+                self.put('Story %s is unavailable!' % target_story)
+                return
         else:
             # there was no story number provided so just pick the first one
             msg = 'Retrieving latest %s from Pivotal Tracker' % self.plural_type

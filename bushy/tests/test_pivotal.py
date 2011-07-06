@@ -277,7 +277,7 @@ class TestFeature(unittest.TestCase):
 
         # test badly configured api / project values don't break the machinery
         self.assertEqual(pick._story, None)
-        self.assertEqual(pick.story, None) # call the property
+        self.assertEqual(pick.get_story(), None) # call the property
         self.assertEqual(pick._story, None)
 
     def test_call(self):
@@ -298,7 +298,7 @@ class TestFeature(unittest.TestCase):
 
         pick._story = story
         
-        pick(args=['git', 'feature'], raw_input=lambda s: '')
+        pick(raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -327,7 +327,7 @@ class TestFeature(unittest.TestCase):
 
         pick._story = story
         
-        pick(args=['git', 'feature'], raw_input=lambda s: '')
+        pick(raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -346,7 +346,7 @@ class TestFeature(unittest.TestCase):
         pick.options['only_mine'] = True
         pick.options['full_name'] = 'Mr Test'
 
-        pick(args=['git', 'feature'])
+        pick()
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -372,7 +372,7 @@ class TestFeature(unittest.TestCase):
 
         pick._story = story
         
-        pick(args=['git', 'feature'], raw_input=lambda s: '')
+        pick(raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -381,6 +381,23 @@ class TestFeature(unittest.TestCase):
         self.assertEqual(out[2], 'URL: %s\n' % story.url)
         self.assertEqual(out[3], 'Updating feature status in Pivotal Tracker...\n')
         self.assertEqual(out[4], 'Unable to update 12345\n')
+
+    def test_call_specify_story(self):
+        self._patch_getoutput('')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['only_mine'] = True
+        pick.options['full_name'] = 'Mr Test'
+        pick.options['target_story'] = '12345'
+
+        pick()
+
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Retrieving story 12345 from Pivotal Tracker\n')
+        self.assertEqual(out[1], 'Story 12345 is unavailable!\n')
 
 class TestBug(unittest.TestCase):
     def setUp(self):
@@ -439,7 +456,7 @@ class TestBug(unittest.TestCase):
 
         # test badly configured api / project values don't break the machinery
         self.assertEqual(pick._story, None)
-        self.assertEqual(pick.story, None) # call the property
+        self.assertEqual(pick.get_story(), None) # call the property
         self.assertEqual(pick._story, None)
 
     def test_call(self):
@@ -460,7 +477,7 @@ class TestBug(unittest.TestCase):
 
         pick._story = story
         
-        pick(args=['git', 'bug'], raw_input=lambda s: '')
+        pick(raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -489,7 +506,7 @@ class TestBug(unittest.TestCase):
 
         pick._story = story
         
-        pick(args=['git', 'bug'], raw_input=lambda s: '')
+        pick(raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -508,7 +525,7 @@ class TestBug(unittest.TestCase):
         pick.options['only_mine'] = True
         pick.options['full_name'] = 'Mr Test'
 
-        pick(args=['git', 'bug'])
+        pick()
 
         self._output.seek(0)
         out = self._output.readlines()
@@ -534,7 +551,7 @@ class TestBug(unittest.TestCase):
 
         pick._story = story
         
-        pick(args=['git', 'bug'], raw_input=lambda s: '')
+        pick(raw_input=lambda s: '')
 
         self._output.seek(0)
         out = self._output.readlines()
