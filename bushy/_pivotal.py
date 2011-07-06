@@ -264,8 +264,9 @@ class Finish(PivotalBase):
             
             stories = self.project.stories(filter=format_filter(qs)).get_etree()
             for story in stories.getchildren():
-                if story.find('id') and story.find('id').text == self.story_id: # pragma: no cover
+                if hasattr(story.find('id'), 'text') and story.find('id').text == self.story_id: # pragma: no cover
                     self._story = Story(story)
+                    break
             
         return self._story
     
