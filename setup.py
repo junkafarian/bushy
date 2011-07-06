@@ -12,6 +12,8 @@ setup(
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     version='0.2dev',
     author='junkafarian',
+    author_email='junkafarian@gmail.com',
+    url='https://github.com/junkafarian/bushy',
     install_requires=REQUIRES,
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -24,7 +26,7 @@ setup(
         "Topic :: Utilities",
         "Environment :: Console",
     ],
-    description='',
+    description='A git workflow plugin.',
     long_description=open(os.path.join(os.path.dirname(__file__), "README.rst")).read(),
     entry_points='''
 [console_scripts]
