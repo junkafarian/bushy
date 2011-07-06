@@ -165,7 +165,7 @@ class Pick(PivotalBase):
                 qs['owned_by'] = self.options['full_name']
             stories = self.project.stories(filter=format_filter(qs)).get_etree()
             story = stories.find('story')
-            if story:
+            if story: # pragma: no cover
                 self._story = Story(story)
         return self._story
         
@@ -264,7 +264,7 @@ class Finish(PivotalBase):
             
             stories = self.project.stories(filter=format_filter(qs)).get_etree()
             for story in stories.getchildren():
-                if story.find('id') and story.find('id').text == self.story_id:
+                if story.find('id') and story.find('id').text == self.story_id: # pragma: no cover
                     self._story = Story(story)
             
         return self._story
