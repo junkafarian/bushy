@@ -2,18 +2,28 @@ Bushy
 =====
 
 A git workflow plugin inspired by 
-`git-pivotal <https://github.com/trydionel/git-pivotal>`_ but
-intending to support multiple project management platforms aside from
-just Pivotal Tracker.
+`git-pivotal <https://github.com/trydionel/git-pivotal>`_ but intending to
+support multiple project management platforms aside from just Pivotal Tracker.
 
 
 Installation
 ============
 
-Bushy is a `Python <http://www.python.org>`_ package and can be
-installed using the ``easy_install`` command in either a virtualenv or
-system wide. This is important to provide the full level of
-integration so that the following commands are possible::
+Bushy is a `Python <http://www.python.org>`_ package and can be installed using
+the ``easy_install`` or ``pip`` commands. For the most seamless integration
+install the package so the generated console scripts are available in your $PATH.
+
+It is always advisable to install python packages within a virtualenv. If you
+``activate`` your project virtualenv while developing, this will place the
+commands in your $PATH automatically. Alternatively, you can create a dedicated
+virtualenv for Bushy and add the scripts to your shell config. If you use
+``bash`` you could do the following to ensure the commands are accessible::
+
+    $ virtualenv-2.6 --no-site-packages bushy
+    $ bushy/bin/pip install bushy
+    $ echo "export PATH = $PATH:/path/to/bushy/bin" > ~/.bash_profile
+
+This will allow you to run the following commands::
 
     $ git feature
     $ git finish
@@ -21,11 +31,9 @@ integration so that the following commands are possible::
             
 As well as::
 
-    $ /path/to/bin/git-feature
-    $ /path/to/bin/git-finish
-    $ /path/to/bin/git-bug
-
-Due to git's usage of naming conventions to find subcommands.
+    $ /path/to/bushy/bin/git-feature
+    $ /path/to/bushy/bin/git-finish
+    $ /path/to/bushy/bin/git-bug
 
 
 Usage
@@ -34,18 +42,17 @@ Usage
 Pivotal Configuration
 ---------------------
 
-Bushy requires global and project local configuration to integrate
-fully.
+Bushy requires global and project local configuration to integrate fully.
+
+Required local configuration (from within your project directory)::
+
+    $ git config -f .git/config bushy.platform pivotal # use Pivotal Tracker for this project
+    $ git config -f .git/config bushy-pivotal.project-id PROJECT_ID # from the project url on the Pivotal Tracker site
 
 Required global configuration::
 
     $ git config --global bushy-pivotal.api-token TOKEN # taken from the profile section on the Pivotal Tracker site
     $ git config --global bushy-pivotal.full-name "YOUR NAME"
-
-Required local configuration (from within your project directory)::
-
-    $ git config -f .git/config bushy.platform pivotal
-    $ git config -f .git/config bushy-pivotal.project-id PROJECT_ID # from the project url on the Pivotal Tracker site
 
 Optional configuration::
 
@@ -56,8 +63,7 @@ Optional configuration::
 Working on a new feature
 ------------------------
 
-You can select a new feature to work on using the ``git-feature``
-command::
+You can select a new feature to work on using the ``git-feature`` command::
 
     junkafarian$ git feature
     Retrieving latest features from Pivotal Tracker
@@ -66,6 +72,17 @@ command::
     Updating feature status in Pivotal Tracker...
     Enter branch name (will be prepended by 8236507) [feature]: 
     Switching to branch 8236507-feature
+    junkafarian$
+
+If you want to work on a specific story you can specify the story id::
+
+    junkafarian$ git feature -s 12345
+    Retrieving story 12345 from Pivotal Tracker
+    Story: hook up with pivotal
+    URL: http://www.pivotaltracker.com/story/show/12345
+    Updating feature status in Pivotal Tracker...
+    Enter branch name (will be prepended by 12345) [feature]: 
+    Switching to branch 12345-feature
     junkafarian$
 
 This will switch you to a new branch for working on the issue
