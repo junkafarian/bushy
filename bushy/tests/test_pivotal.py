@@ -621,6 +621,85 @@ class TestFinish(unittest.TestCase):
                          'correct format, please checkout the correct '+\
                          'branch then re-run this command\n')
         
+    def test_call_w_unfinished_error(self):
+        self._patch_getoutput('* 12345-feature\nerror: foo')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+
+        story = self._makeStory('<xml></xml>', [])
+        story.id = 12345
+        story.name = 'Story 1'
+        story.url = 'http://url'
+        story.owned_by = pick.options['full_name']
+        story.h = DummyHttp()
+        story.h.content = '<story><id>%s</id><name>%s</name><url>%s</url><current_state>%s</current_state><owned_by>%s</owned_by></story>' % (story.id, story.name, story.url, 'started', pick.options['full_name'])
+
+        pick._story = story
+        
+        pick()
+        
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Marking Story 12345 as finished...\n')
+        self.assertEqual(out[1], 'Unable to mark Story 12345 as finished\n')
+        
+    def test_call_w_merge_error(self):
+        self._patch_getoutput('* 12345-feature\nerror: foo')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['integration_branch'] = 'master'
+
+        story = self._makeStory('<xml></xml>', [])
+        story.id = 12345
+        story.name = 'Story 1'
+        story.url = 'http://url'
+        story.owned_by = pick.options['full_name']
+        story.h = DummyHttp()
+        story.h.content = '<story><id>%s</id><name>%s</name><url>%s</url><current_state>%s</current_state><owned_by>%s</owned_by></story>' % (story.id, story.name, story.url, 'finished', pick.options['full_name'])
+
+        pick._story = story
+        
+        pick()
+        
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Marking Story 12345 as finished...\n')
+        self.assertEqual(out[1], 'Merging 12345-feature into master\n')
+        self.assertEqual(out[2], 'There was an error checking out master:\n')
+        self.assertEqual(out[3], '* 12345-feature\n')
+        self.assertEqual(out[4], 'error: foo\n')
+        
+    def test_call(self):
+        self._patch_getoutput('* 12345-feature')
+        
+        pick = self._makeOne([])
+        pick.options['api_token'] = 'token'
+        pick.options['project_id'] = 'uniqueproject'
+        pick.options['integration_branch'] = 'master'
+
+        story = self._makeStory('<xml></xml>', [])
+        story.id = 12345
+        story.name = 'Story 1'
+        story.url = 'http://url'
+        story.owned_by = pick.options['full_name']
+        story.h = DummyHttp()
+        story.h.content = '<story><id>%s</id><name>%s</name><url>%s</url><current_state>%s</current_state><owned_by>%s</owned_by></story>' % (story.id, story.name, story.url, 'finished', pick.options['full_name'])
+
+        pick._story = story
+        
+        pick()
+        
+        self._output.seek(0)
+        out = self._output.readlines()
+        self.assertEqual(out[0], 'Marking Story 12345 as finished...\n')
+        self.assertEqual(out[1], 'Merging 12345-feature into master\n')
+        self.assertEqual(out[2], 'Removing 12345-feature branch\n')
+        self.assertEqual(out[3], 'Merged code into trunk. Please push upstream and notify the release manager if necessary\n')
+        
 
 class DummyHttp(object):
     def __init__(self):
