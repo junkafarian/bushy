@@ -185,13 +185,13 @@ class Pick(PivotalBase):
             if self.options['only_mine']:
                 msg += " for " + self.options['full_name']
 
-        self.put(msg)
+            self.put(msg)
         
-        story = self.story
+            story = self.get_story()
         
-        if story is None:
-            self.put('No %s available!' % self.plural_type)
-            return
+            if story is None:
+                self.put('No %s available!' % self.plural_type)
+                return
         
         self.put('Story: %s' % story.name)
         self.put('URL: %s' % story.url)
@@ -258,7 +258,7 @@ class Finish(PivotalBase):
     _story = None
     @property
     def story(self):
-        if not self._story:
+        if self._story is None:
             qs = {}
             qs['owned_by'] = self.options['full_name']
             
