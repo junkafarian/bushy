@@ -3,14 +3,14 @@ from setuptools import find_packages
 from distutils.core import setup
 
 REQUIRES = [
-    'pivotal-py',
     'httplib2',
+    'pivotal-py',
     ]
 
 setup(
     name='bushy',
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-    version='0.3dev',
+    version='0.2.3',
     author='junkafarian',
     author_email='junkafarian@gmail.com',
     url='https://github.com/junkafarian/bushy',
@@ -27,7 +27,8 @@ setup(
         "Environment :: Console",
     ],
     description='A git workflow plugin.',
-    long_description=open(os.path.join(os.path.dirname(__file__), "README.rst")).read(),
+    long_description=open('README.rst').read(),
+    include_package_data=True,
     entry_points='''
 [console_scripts]
 git-feature = bushy.scripts:feature

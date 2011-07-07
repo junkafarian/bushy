@@ -100,6 +100,13 @@ committed the changes, you can declare the task as finished::
 
 You can then push these changes upstream.
 
+Changes
+=======
+
+0.2.3
+-----
+
+A bugfix release due to bad packaging when uploading to PyPI. Sorry to anyone who experienced problems!
 
 Roadmap
 =======
