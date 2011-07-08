@@ -10,7 +10,7 @@ REQUIRES = [
 setup(
     name='bushy',
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-    version='0.2.4',
+    version='0.3dev',
     author='junkafarian',
     author_email='junkafarian@gmail.com',
     url='https://github.com/junkafarian/bushy',
